@@ -15,7 +15,6 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
     env_file:
       - .env
-      - secrect.env
     networks:
       iot-weather-1:
         ipv4_address: 172.18.0.2  # Asigna una dirección IP específica a 'app'
