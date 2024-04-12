@@ -1,0 +1,66 @@
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8123:8000"
+    depends_on:
+      - postgres_database
+    volumes:
+      - ./app/:/app/
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    env_file:
+      - .env
+      - secrect.env
+    networks:
+      iot-weather-1:
+        ipv4_address: 172.18.0.2  # Asigna una dirección IP específica a 'app'
+
+
+  #! POSTGRESQL
+  postgres_database: #! Hostname 
+    container_name: db_postgres
+    image: postgres:latest
+    restart: always
+    ports:
+      - '5432:5432'
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      iot-weather-1:
+        ipv4_address: 172.18.0.3  # Asigna una dirección IP específica a 'database'
+  
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - "8321:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: iot@eia.edu.co
+      PGADMIN_DEFAULT_PASSWORD: raspberry
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      iot-weather-1:
+        ipv4_address: 172.18.0.4
+
+networks:
+  iot-weather-1:
+    name: iot-weather-1
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+
+volumes:
+  pgdata:
+  pgadmin-data:
+    driver: local

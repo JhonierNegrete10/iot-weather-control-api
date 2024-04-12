@@ -1,0 +1,12 @@
+{"pytest_version": "8.1.1", "$report_type": "SessionStart"}
+{"nodeid": "", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "app/core", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "app/db", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "app/tests", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "app/utils", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "app", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "weather/routers", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "weather/services", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": "weather", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"nodeid": ".", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "$report_type": "CollectReport"}
+{"exitstatus": 2, "$report_type": "SessionFinish"}
