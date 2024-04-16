@@ -45,8 +45,8 @@ def read_last_setpoint(device_mac: str, session: Session = Depends(get_session))
 
 @device_routes.post("/", response_model=DeviceResponse)
 def create_device(device: DeviceCreate, session: Session = Depends(get_session)):
-    device = device_crud.get_by_mac(device.mac, session)
-    if device:
+    device_db = device_crud.get_by_mac(device.mac, session)
+    if device_db:
         raise HTTPException(status_code=404, detail="device already created")
     return device_crud.create(device, session)
 
