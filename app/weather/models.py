@@ -1,15 +1,10 @@
 from datetime import datetime
 from typing import List, Optional
 
-import pytz
 from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
-BOGOTA_TZ = pytz.timezone("America/Bogota")
-
-
-def cotnow():
-    return datetime.now(tz=BOGOTA_TZ)
+from app.utils.data_time_zone import cotnow
 
 
 class BaseTableModel(SQLModel):

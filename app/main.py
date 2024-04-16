@@ -4,6 +4,7 @@ import logging
 
 import uvicorn
 from fastapi import FastAPI
+from iot import DataModel, DeviceModel, SetpointModel, iot_router  # noqa: F401
 from weather import WeatherAPIModel, api_router  # noqa: F401
 
 from app.core.config import settings
@@ -24,6 +25,18 @@ app = FastAPI(
     description=""" IOT WEATHER API CONTROL """,
 )
 app.include_router(api_router)
+app.include_router(iot_router)
+
+
+@app.get("/")
+def home():
+    return {
+        "Welcome": dict(
+            title=settings.PROJECT_NAME,
+            version=settings.PROJECT_VERSION,
+            description=""" IOT WEATHER API CONTROL """,
+        )
+    }
 
 
 @app.on_event("startup")

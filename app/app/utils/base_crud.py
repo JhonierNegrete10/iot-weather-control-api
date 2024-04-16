@@ -53,6 +53,5 @@ class BaseCRUD:
     def count(self, session: Session) -> int:
         statement = select(func.count()).select_from(self.model)
         result = session.exec(statement)
-        # print("result ::", result.first())
         count = result.first()
         return count
