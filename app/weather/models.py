@@ -1,16 +1,17 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
-from app.utils.data_time_zone import cotnow
+from app.utils.data_time_zone import DateTimeColombia
 
 
 class BaseTableModel(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=cotnow)
-    updated_at: datetime = Field(default_factory=cotnow)
+    created_at: datetime = Field(default_factory=DateTimeColombia.now)
+    updated_at: datetime = Field(default_factory=DateTimeColombia.now)
+    created_date: date = Field(default_factory=DateTimeColombia.today)
 
 
 class WeatherModel(BaseTableModel, table=True):

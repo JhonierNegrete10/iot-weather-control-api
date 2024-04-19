@@ -4,29 +4,32 @@ from operator import attrgetter
 from sqlmodel import Session, select
 
 from app.utils.base_crud import BaseCRUD
+from app.utils.data_time_zone import DateTimeColombia
 
 from .models import DataModel, DeviceModel, SetpointModel
 
 
-class DeviceCRUD(BaseCRUD):
-    model = DeviceModel
-
-    def get_by_mac(self, mac, session: Session):
-        statement = select(self.model).where(self.model.mac == mac)
+class GetMACCRUD(BaseCRUD):
+    def get_by_mac(self, device_mac, session: Session):
+        statement = select(self.model).where(self.model.device_mac == device_mac)
         result = session.exec(statement)
         obj = result.first()
         return obj
 
-    def get_setpoints(self, mac, session: Session):
-        statement = select(self.model).where(self.model.mac == mac)
+
+class DeviceCRUD(GetMACCRUD):
+    model = DeviceModel
+
+    def get_setpoints(self, device_mac, session: Session):
+        statement = select(self.model).where(self.model.device_mac == device_mac)
         result = session.exec(statement)
         obj = result.first()
         if obj:
             return obj.setpoints
         return None
 
-    def get_last_setpoint(self, mac, session: Session):
-        setpoints: list = self.get_setpoints(mac, session)
+    def get_last_setpoint(self, device_mac, session: Session):
+        setpoints: list = self.get_setpoints(device_mac, session)
         if not setpoints:
             return None
         setpoints = sorted(setpoints, key=attrgetter("created_at"), reverse=True)
@@ -36,21 +39,31 @@ class DeviceCRUD(BaseCRUD):
 device_crud = DeviceCRUD()
 
 
-class SetpointsCRUD(BaseCRUD):
+class SetpointsCRUD(GetMACCRUD):
     model = SetpointModel
 
 
 setpoints_crud = SetpointsCRUD()
 
 
-class DataCRUD(BaseCRUD):
+class DataCRUD(GetMACCRUD):
     model = DataModel
 
-    def get_by_mac(self, mac, session: Session):
-        statement = select(self.model).where(self.model.mac == mac)
+    def get_all_by_mac(self, device_mac, session: Session):
+        statement = select(self.model).where(self.model.device_mac == device_mac)
         result = session.exec(statement)
-        obj = result.first()
-        return obj
+        result = result.all()
+        return [obj_db for obj_db in result]
+
+    def filter_data_current_day(self, device_mac: str, session: Session):
+        current_date = DateTimeColombia.today()
+
+        statement = select(self.model).where(
+            self.model.device_mac == device_mac,
+            self.model.created_date == current_date,
+        )
+        result = session.exec(statement)
+        return [obj_db for obj_db in result]
 
 
 data_crud = DataCRUD()

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+import asyncio
+
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlmodel import Session
 
 from app.db.configDatabase import get_session
@@ -12,6 +14,7 @@ from .models import (
     SetpointCreate,
     SetpointResponse,
 )
+from .websocketmanager import manager
 
 device_routes = APIRouter(prefix="/device", tags=["device"])
 
@@ -39,13 +42,16 @@ def read_last_setpoint(device_mac: str, session: Session = Depends(get_session))
         raise HTTPException(status_code=404, detail="device not found")
 
     setpoint = device_crud.get_last_setpoint(device_mac, session)
-
+    if setpoint is None:
+        raise HTTPException(
+            status_code=404, detail="device dont have setpoint created yet"
+        )
     return setpoint
 
 
 @device_routes.post("/", response_model=DeviceResponse)
 def create_device(device: DeviceCreate, session: Session = Depends(get_session)):
-    device_db = device_crud.get_by_mac(device.mac, session)
+    device_db = device_crud.get_by_mac(device.device_mac, session)
     if device_db:
         raise HTTPException(status_code=404, detail="device already created")
     return device_crud.create(device, session)
@@ -90,8 +96,25 @@ def read_setpoint(setpoint_id: int, session: Session = Depends(get_session)):
     return setpoint
 
 
+@setpoints_routes.get("/device/{device_mac}", response_model=SetpointResponse)
+def read_setpoint_by_mac(device_mac: str, session: Session = Depends(get_session)):
+    device = device_crud.get_by_mac(device_mac, session)
+    if device is None:
+        raise HTTPException(status_code=404, detail="device not found")
+
+    setpoint = setpoints_crud.get_by_mac(device_mac, session)
+    if setpoint is None:
+        raise HTTPException(
+            status_code=404, detail="device dont have setpoint created yet"
+        )
+    return setpoint
+
+
 @setpoints_routes.post("/", response_model=SetpointResponse)
 def create_setpoint(setpoint: SetpointCreate, session: Session = Depends(get_session)):
+    device = device_crud.get_by_mac(setpoint.device_mac, session)
+    if device is None:
+        raise HTTPException(status_code=404, detail="device not found")
     return setpoints_crud.create(setpoint, session)
 
 
@@ -108,8 +131,8 @@ def update_setpoint(
 
 
 @setpoints_routes.delete("/{setpoint_id}")
-def setpoint(setpoint_id: int, session: Session = Depends(get_session)):
-    deleted = setpoint(session, setpoint_id)
+def delete_setpoint(setpoint_id: int, session: Session = Depends(get_session)):
+    deleted = setpoints_crud.delete(setpoint_id, session)
     if not deleted:
         raise HTTPException(status_code=404, detail="Setpoint not found")
     return {"message": "Setpoint deleted"}
@@ -134,9 +157,25 @@ def read_data_by_id(data_id: int, session: Session = Depends(get_session)):
     return data
 
 
+@data_routes.get("/device/{device_mac}", response_model=list[DataResponse])
+def read_data_for_plot(device_mac: str, session: Session = Depends(get_session)):
+    device = device_crud.get_by_mac(device_mac, session)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device Mac not found")
+    data = data_crud.filter_data_current_day(device_mac, session)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Data not found")
+    return data
+
+
 @data_routes.post("/", response_model=DataResponse)
-def create_data(data: DataCreate, session: Session = Depends(get_session)):
-    return data_crud.create(data, session)
+async def create_data(data: DataCreate, session: Session = Depends(get_session)):
+    device = device_crud.get_by_mac(data.device_mac, session)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device Mac not found")
+    data_db: DataResponse = data_crud.create(data, session)
+    asyncio.create_task(manager.send_data(data_db.model_dump_json(), data.device_mac))
+    return data_db
 
 
 @data_routes.put("/{data_id}", response_model=DataResponse)
@@ -157,7 +196,14 @@ def delete_data(data_id: int, session: Session = Depends(get_session)):
     return {"message": "Data deleted"}
 
 
-# add get data by mac
-# add get data by mac  and filtering by date
-# posiblemente toque agregar una columna por dia
-# ya que extraer todo para extraer el ultimo traiga a todos
+@data_routes.websocket("/ws/{device_mac}")
+async def websocket_endpoint(websocket: WebSocket, device_mac: str):
+    await manager.connect(websocket, device_mac)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == "disconnect":
+                raise WebSocketDisconnect
+            # Aquí puedes manejar mensajes entrantes si es necesario
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, device_mac)
