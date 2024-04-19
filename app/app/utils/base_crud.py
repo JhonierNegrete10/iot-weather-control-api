@@ -1,4 +1,5 @@
-from typing import List
+from datetime import date
+from typing import List, Type
 
 from sqlmodel import Session, SQLModel, func, select
 
@@ -44,14 +45,33 @@ class BaseCRUD:
         session.commit()
         return db_obj
 
+    def count(self, session: Session) -> int:
+        statement = select(func.count()).select_from(self.model)
+        result = session.exec(statement)
+        count = result.first()
+        return count
+
     def filter_by(self, filters: dict, session: Session) -> List[SQLModel]:
         statement = select(self.model).where(**filters)
         result = session.exec(statement)
         result = result.all()
         return [obj_db for obj_db in result]
 
-    def count(self, session: Session) -> int:
-        statement = select(func.count()).select_from(self.model)
-        result = session.exec(statement)
-        count = result.first()
-        return count
+    @staticmethod
+    def filter_data_by_date_and_attribute(
+        session: Session, model: Type, date_value: date, **attributes
+    ) -> List:
+        """
+        Filtra los datos en la base de datos por una fecha y otros atributos específicos.
+
+        :param session: Instancia de la sesión de SQLAlchemy.
+        :param model: Clase del modelo SQLAlchemy.
+        :param date_value: Fecha específica para filtrar los datos.
+        :param attributes: Diccionario de atributos adicionales para filtrar.
+        :return: Lista de objetos filtrados por la fecha y los atributos especificados.
+        """
+        query = session.query(model).filter(model.created_date == date_value)
+        for attr, value in attributes.items():
+            query = query.filter(getattr(model, attr) == value)
+        result = query.all()
+        return result

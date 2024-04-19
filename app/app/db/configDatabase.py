@@ -16,9 +16,9 @@ engine = create_engine(
     future=True,
     pool_pre_ping=True,
     isolation_level="AUTOCOMMIT",
-    query_cache_size=0,
+    # query_cache_size=0,
     # expire_on_commit=True,
-    execution_options={"compiled_cache": None, "autocomit": True},
+    # execution_options={"compiled_cache": None, "autocomit": True},
 )
 
 
