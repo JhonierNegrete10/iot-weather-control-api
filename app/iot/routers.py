@@ -11,6 +11,7 @@ from .models import (
     DataResponse,
     DeviceCreate,
     DeviceResponse,
+    DeviceUpdate,
     SetpointCreate,
     SetpointResponse,
 )
@@ -59,12 +60,20 @@ def create_device(device: DeviceCreate, session: Session = Depends(get_session))
 
 @device_routes.put("/{device_id}", response_model=DeviceResponse)
 def update_device(
-    device_id: int, device: DeviceCreate, session: Session = Depends(get_session)
+    device_id: int, device: DeviceUpdate, session: Session = Depends(get_session)
 ):
-    # add validation device_id and if the mac of device is different in db
+    # Check if device_id exists
+    existing_device = device_crud.get_by_id(device_id, session)
+    if existing_device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    if device.device_mac:
+        # Check if MAC address is different
+        if existing_device.device_mac != device.device_mac:
+            raise HTTPException(status_code=400, detail="MAC address cannot be changed")
+    else:
+        device.device_mac = existing_device.device_mac
+
     updated_device = device_crud.update(device_id, device, session)
-    if updated_device is None:
-        raise HTTPException(status_code=404, detail="device not found")
     return updated_device
 
 
@@ -102,7 +111,7 @@ def read_setpoint_by_mac(device_mac: str, session: Session = Depends(get_session
     if device is None:
         raise HTTPException(status_code=404, detail="device not found")
 
-    setpoint = setpoints_crud.get_by_mac(device_mac, session)
+    setpoint = device_crud.get_last_setpoint(device_mac, session)
     if setpoint is None:
         raise HTTPException(
             status_code=404, detail="device dont have setpoint created yet"
@@ -158,11 +167,16 @@ def read_data_by_id(data_id: int, session: Session = Depends(get_session)):
 
 
 @data_routes.get("/device/{device_mac}", response_model=list[DataResponse])
-def read_data_for_plot(device_mac: str, session: Session = Depends(get_session)):
+def read_data_for_plot(
+    device_mac: str,
+    skip: int = 0,
+    limit: int = 100,
+    session: Session = Depends(get_session),
+):
     device = device_crud.get_by_mac(device_mac, session)
     if not device:
         raise HTTPException(status_code=404, detail="Device Mac not found")
-    data = data_crud.filter_data_current_day(device_mac, session)
+    data = data_crud.filter_data_current_day(skip, limit, device_mac, session)
     if data is None:
         raise HTTPException(status_code=404, detail="Data not found")
     return data

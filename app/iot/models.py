@@ -47,6 +47,11 @@ class DeviceCreate(BaseModel):
     description: str
 
 
+class DeviceUpdate(BaseModel):
+    device_mac: Optional[str]
+    description: Optional[str]
+
+
 # Definición del modelo HistoricoSetpoint
 class SetpointModel(BaseTable, table=True):
     setpoint: float

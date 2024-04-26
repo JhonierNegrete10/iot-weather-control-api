@@ -55,12 +55,18 @@ class DataCRUD(GetMACCRUD):
         result = result.all()
         return [obj_db for obj_db in result]
 
-    def filter_data_current_day(self, device_mac: str, session: Session):
+    def filter_data_current_day(self, skip, limit, device_mac: str, session: Session):
         current_date = DateTimeColombia.today()
 
-        statement = select(self.model).where(
-            self.model.device_mac == device_mac,
-            self.model.created_date == current_date,
+        statement = (
+            select(self.model)
+            .where(
+                self.model.device_mac == device_mac,
+                self.model.created_date == current_date,
+            )
+            .order_by(self.model.created_at.desc())
+            .offset(skip)
+            .limit(limit)
         )
         result = session.exec(statement)
         return [obj_db for obj_db in result]

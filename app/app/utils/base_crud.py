@@ -21,13 +21,14 @@ class BaseCRUD:
         result = result.all()
         return [obj_db for obj_db in result]
 
-    def get_by_id(self, id, session: Session):
+    def get_by_id(self, id, session: Session) :
         statement = select(self.model).where(self.model.id == id)
         result = session.exec(statement)
         obj = result.first()
         return obj
 
     def update(self, id, obj_data, session: Session):
+        obj_data = obj_data.model_dump()
         statement = select(self.model).where(self.model.id == id)
         result = session.exec(statement)
         db_obj = result.first()
