@@ -18,7 +18,7 @@ services:
       - stack.env
     networks:
       iot-weather-1:
-        ipv4_address: 172.18.0.2  # Asigna una dirección IP específica a 'app'
+        ipv4_address: 172.21.0.2  # Asigna una dirección IP específica a 'app'
 
 
   #! POSTGRESQL
@@ -34,7 +34,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       iot-weather-1:
-        ipv4_address: 172.18.0.3  # Asigna una dirección IP específica a 'database'
+        ipv4_address: 172.21.0.3  # Asigna una dirección IP específica a 'database'
   
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -49,7 +49,7 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     networks:
       iot-weather-1:
-        ipv4_address: 172.18.0.4
+        ipv4_address: 172.21.0.4
 
 networks:
   iot-weather-1:
@@ -58,7 +58,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.18.0.0/16
+        - subnet: 172.21.0.0/16
 
 volumes:
   pgdata:
