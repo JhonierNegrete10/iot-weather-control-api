@@ -1,5 +1,5 @@
 # Use the official Python image
-FROM python:latest
+FROM python:3.11
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-setuptools \
     python3-venv \
+    cmake\
     git \
     curl \
     wget \
