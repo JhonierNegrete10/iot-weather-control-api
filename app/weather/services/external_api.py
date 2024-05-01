@@ -37,6 +37,20 @@ def fetch_weather_data(
         "units": "metric",
     }
 
-    response = requests.get(base_url, params=params)
+    try:
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()  # Raises a HTTPError if the status is 4xx, 5xx
+    except requests.exceptions.HTTPError as errh:
+        print ("HTTP Error:",errh)
+        return None
+    except requests.exceptions.ConnectionError as errc:
+        print ("Error Connecting:",errc)
+        return None
+    except requests.exceptions.Timeout as errt:
+        print ("Timeout Error:",errt)
+        return None
+    except requests.exceptions.RequestException as err:
+        print ("Something went wrong with the request:",err)
+        return None
 
     return response.json()

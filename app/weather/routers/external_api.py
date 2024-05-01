@@ -87,6 +87,8 @@ async def get_weather_data_from_api():
     """
     location_params = LocationParams()
     data = await fetch_and_validate_weather_data(location_params)
+    if not data:
+        return None
     return create_weather_api_response(data)
 
 
